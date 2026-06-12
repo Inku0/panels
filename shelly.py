@@ -71,6 +71,6 @@ class Shelly:
         data=json.dumps(data)
       )
       if r.status_code != 200:
-        self.logger.error(f"shelly returned an error while turning {"on" if status == True else "false"} device {device}: {r.text}")
+        self.logger.error(f"shelly returned an error while turning {"on" if status == True else "off"} device {device}: {r.text}")
         return
-      self.logger.info(f"turned {"on" if status == True else "false"} device {device}")
+      self.logger.info(f"turned {"on" if status == True else "off"} device {device}")
