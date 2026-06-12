@@ -46,10 +46,11 @@ class Shelly:
 
     return online
 
-  def set_offline(self, devices: list[str] | None = None) -> None:
+  def set_status(self, status: bool, devices: list[str] | None = None) -> None:
     """
-    Turns devices off.
-    :param devices: List of devices to turn off. If unset, then all added devices are turned off.
+    Turns devices on or off.
+    :param status: True or False aka on or off.
+    :param devices: List of devices to turn on or off. If unset, then all added devices are turned off.
     """
     if not self.devices:
       self.logger.error(ERR_NO_DEVICES)
@@ -61,7 +62,7 @@ class Shelly:
     for device in devices:
       sleep(1) # Shelly limits all API requests to 1 per second!
 
-      data = {"id": device, "on": False, "channel": 1}
+      data = {"id": device, "on": status, "channel": 1}
       # i've got no idea why the channel needs to be set to 1
       # the default channel is 0, but the POST request just didn't do anything when channel = 0
       r = requests.post(
@@ -70,6 +71,6 @@ class Shelly:
         data=json.dumps(data)
       )
       if r.status_code != 200:
-        self.logger.error(f"shelly returned an error while turning off device {device}: {r.text}")
+        self.logger.error(f"shelly returned an error while turning {"on" if status == True else "false"} device {device}: {r.text}")
         return
-      self.logger.info(f"turned off device {device}")
+      self.logger.info(f"turned {"on" if status == True else "false"} device {device}")
