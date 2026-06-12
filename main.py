@@ -33,11 +33,11 @@ def main():
   latitude = get_required_env_var("LATITUDE")
   longitude = get_required_env_var("LONGITUDE")
   timezone = get_required_env_var("TIMEZONE")
-  sun = Sun(float(latitude), float(longitude))
-  sun_up: datetime = sun.get_sunrise_time(time_zone=timezone)
-  sun_down: datetime = sun.get_sunset_time(time_zone=timezone)
-
   tz = zoneinfo.ZoneInfo(timezone)
+  sun = Sun(float(latitude), float(longitude))
+  sun_up: datetime = sun.get_sunrise_time(time_zone=tz)
+  sun_down: datetime = sun.get_sunset_time(time_zone=tz)
+
   now = datetime.now(tz=tz)
   is_sun_up = sun_up <= now <= sun_down
 
