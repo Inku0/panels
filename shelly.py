@@ -6,7 +6,7 @@ import json
 
 ERR_NO_DEVICES = "no devices available, try adding some with add_devices()"
 
-class Shelly():
+class Shelly:
   def __init__(self, server: str, key: str) -> None:
     self.server: str = server
     self.key: str = key
