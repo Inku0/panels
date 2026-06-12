@@ -40,12 +40,10 @@ def main():
   shelly = Shelly(cloud_server, cloud_auth_key)
   shelly.add_devices(devices)
 
-  while True:
-    sleep(60)
-    if solar.get_power_status().current_power_kw >= 7:
-      shelly.set_status(True)
-    elif solar.get_power_status().current_power_kw < 5:
-      shelly.set_status(False)
+  if solar.get_power_status().current_power_kw >= 7:
+    shelly.set_status(True)
+  elif solar.get_power_status().current_power_kw < 5:
+    shelly.set_status(False)
 
 if __name__ == "__main__":
   main()
