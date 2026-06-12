@@ -1,4 +1,6 @@
-from time import sleep
+import zoneinfo
+from datetime import datetime
+from suntime.suntime import Sun
 import sys
 
 from fusion_solar_py.client import FusionSolarClient
@@ -8,7 +10,6 @@ import os
 from shelly import Shelly
 from dotenv import load_dotenv
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 MIN_PRODUCTION = 5
@@ -26,7 +27,23 @@ def get_required_env_var(name: str) -> str:
   return value
 
 def main():
+  load_dotenv()
   logging.basicConfig(level=logging.INFO)
+
+  latitude = get_required_env_var("LATITUDE")
+  longitude = get_required_env_var("LONGITUDE")
+  timezone = get_required_env_var("TIMEZONE")
+  sun = Sun(latitude, longitude)
+  sun_up: datetime = sun.get_sunrise_time(time_zone=timezone)
+  sun_down: datetime = sun.get_sunset_time(time_zone=timezone)
+
+  tz = zoneinfo.ZoneInfo(timezone)
+  now = datetime.now(tz=tz)
+  is_sun_up = sun_up <= now <= sun_down
+
+  if not is_sun_up:
+    logger.info("Sun hasn't risen or has set. Skipping poll.")
+    sys.exit(0)
 
   cloud_server = get_required_env_var("CLOUD_SERVER")
   cloud_auth_key = get_required_env_var("CLOUD_AUTH_KEY")
