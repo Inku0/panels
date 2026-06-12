@@ -36,10 +36,9 @@ def main():
   tz = zoneinfo.ZoneInfo(timezone)
   sun = Sun(float(latitude), float(longitude))
   sun_up: datetime = sun.get_sunrise_time(time_zone=tz)
-  sun_down: datetime = sun.get_sunset_time(time_zone=tz)
 
   now = datetime.now(tz=tz)
-  is_sun_up = sun_up <= now <= sun_down
+  is_sun_up = sun_up <= now
 
   if not is_sun_up:
     logger.info("Sun hasn't risen or has set. Skipping poll.")
