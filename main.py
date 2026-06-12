@@ -1,4 +1,4 @@
-from time import sleep
+from fusion_solar import get_solar_power
 import logging
 import os
 
@@ -16,8 +16,8 @@ def main():
     logger.error("CLOUD_SERVER environment variable not set")
     exit(1)
 
-  cloud_auth_key = os.getenv("CLOUD_AUTH_KEY")
-  if not cloud_auth_key:
+  fusion_solar_url = os.getenv("CLOUD_AUTH_KEY")
+  if not fusion_solar_url:
     logger.error("CLOUD_AUTH_KEY environment variable not set")
     exit(1)
 
@@ -28,13 +28,16 @@ def main():
   else:
     devices = cloud_devices.split(",")
 
-  shelly = Shelly(cloud_server, cloud_auth_key)
+  fusion_solar_url = os.getenv("FUSION_SOLAR_URL")
+  if not fusion_solar_url:
+    logger.error("FUSION_SOLAR_URL environment variable not set")
+    exit(1)
 
+  shelly = Shelly(cloud_server, fusion_solar_url)
   # Shelly limits all API requests to 1 per second!
-
   shelly.add_devices(devices)
-  print(shelly.get_online())
-  shelly.set_offline()
+
+  print(get_solar_power(fusion_solar_url))
 
 if __name__ == "__main__":
   main()
