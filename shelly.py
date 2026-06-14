@@ -46,6 +46,33 @@ class Shelly:
 
     return online
 
+  def get_active(self) -> dict[str, bool]:
+    """
+    Returns a dictionary where each device corresponds to an entry.
+    A device's ID is the key, its active status (i.e., whether it's working) as a boolean is the value.
+    """
+    if not self.devices:
+      self.logger.error(ERR_NO_DEVICES)
+      return {}
+
+    data = {"ids":self.devices,"select":["status"],"pick":{"status":["switch:1"]}}
+    # switch:1 seems to control the actual power output, not sure what switch:0 is for
+    r = requests.post(
+      url=f"{self.server}/v2/devices/api/get?auth_key={self.key}",
+      headers={"Content-Type": "application/json"},
+      data=json.dumps(data)
+    )
+
+    if r.status_code != 200:
+      self.logger.error(f"shelly returned an error: {r.text}")
+      return {}
+
+    active: dict[str, bool] = {}
+    for device in json.loads(r.text):
+      active[device["id"]] = (device["status"]["switch:1"]["output"] == True)
+
+    return active
+
   def set_status(self, status: bool, devices: list[str] | None = None) -> None:
     """
     Turns devices on or off.
@@ -65,6 +92,8 @@ class Shelly:
       data = {"id": device, "on": status, "channel": 1}
       # i've got no idea why the channel needs to be set to 1
       # the default channel is 0, but the POST request just didn't do anything when channel = 0
+      # more info: the switch seems to have two channels (0 and 1) with separate temperatures and output values
+      # not sure what they represent, though
       r = requests.post(
         url=f"{self.server}/v2/devices/api/set/switch?auth_key={self.key}",
         headers={"Content-Type": "application/json"},
