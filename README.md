@@ -12,4 +12,7 @@ FUSION_SOLAR_SUBDOMAIN=uni<number>eu5
 LATITUDE=12.34
 LONGITUDE=56.78
 TIMEZONE=Continent/City
+STATION_DN=<2 chars>=<number>
+TIME_DIM=<number>
+TIME_ZONE=<float>
 ```
