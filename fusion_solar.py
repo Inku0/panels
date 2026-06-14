@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_session(playwright: Playwright, url: str, username: str, password: str) -> str:
-  browser = playwright.chromium.launch(headless=False)
+  browser = playwright.chromium.launch(headless=True)
   context = browser.new_context()
   page = context.new_page()
   page.goto(url=url)
