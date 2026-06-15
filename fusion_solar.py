@@ -1,17 +1,24 @@
 from datetime import datetime
-import html
-import json
-import logging
-import time
+from json import loads
+from logging import getLogger
+from time import time
+from requests import get
 
-import requests
 from playwright.sync_api import Playwright, expect
 
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 def get_session(playwright: Playwright, url: str, username: str, password: str) -> str:
+  """
+  Gets the "dp-session" cookie from the management panel.
+  :param playwright: A Playwright instance
+  :param url: The URL which provides the login page
+  :param username: Username for logging in
+  :param password: Password for logging in
+  :return: The "dp-session" cookie's value
+  """
   browser = playwright.chromium.launch(headless=True)
   context = browser.new_context()
   page = context.new_page()
@@ -31,10 +38,18 @@ def get_session(playwright: Playwright, url: str, username: str, password: str) 
     if cookie["name"] == "dp-session":
       return cookie["value"]
 
-  logger.error(f"failed to get session cookie from {cookies}")
-  return ""
+  raise Exception(f"failed to get session cookie from {cookies}")
 
 def get_current_usage(session_cookie: str, station_dn: str, time_dim: str, time_zone: str, subdomain: str) -> float:
+  """
+  Gets the current energy usage in kilowatts.
+  :param session_cookie: The "dp-session" cookie's value
+  :param station_dn: Not sure what this controls, perhaps it's the plant's ID?
+  :param time_dim: Seems to be the UTC timezone offset as a float
+  :param time_zone: Timezone as Country/City
+  :param subdomain: Management URL's subdomain, usually something like uni023eu5
+  :return: Current energy usage in kilowatts
+  """
   cookies = {
     'dp-session': session_cookie,
   }
@@ -44,7 +59,7 @@ def get_current_usage(session_cookie: str, station_dn: str, time_dim: str, time_
     'Connection': 'keep-alive',
   }
 
-  now = round(time.time())
+  now: int = round(time())
   params = {
     #
     'stationDn': station_dn,
@@ -55,36 +70,18 @@ def get_current_usage(session_cookie: str, station_dn: str, time_dim: str, time_
     '_': now + 53403377, # not sure what this controls, a request i captured was set to this
   }
 
-  r = requests.get(
+  r = get(
     f'https://{subdomain}.fusionsolar.huawei.com/rest/pvms/web/station/v3/overview/energy-balance',
     params=params,
     cookies=cookies,
     headers=headers,
   )
 
-  parsed = json.loads(r.text)
+  parsed = loads(r.text)
   usages: list[str] = parsed["data"]["usePower"]
 
-  boundary = usages.index("--")
+  boundary: int = usages.index("--")
   if boundary - 1 < 0:
     raise Exception("no power usage data")
 
   return float(usages[boundary - 1])
-
-def get_solar_power(url: str) -> float:
-  """
-  Gets a Fusion Solar panel plant's current power output in kilowatts.
-  :param url: The URL where the "kiosk version" gets its data from
-  :return: real-time power output in kW (currently has a noticeable delay)
-  """
-
-  # TODO these kiosk URLs have a big delay and they only last a year, a better solution would be helpful
-  r = requests.get(url)
-  if r.status_code != 200:
-    logger.error(f"failed to get solar power: {r.text}")
-
-  response: dict[str, str] = json.loads(r.text)
-  unescaped_content = html.unescape(response["data"])
-  parsed_content = json.loads(unescaped_content)
-
-  return parsed_content["realKpi"]["realTimePower"]
