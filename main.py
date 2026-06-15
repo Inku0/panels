@@ -21,8 +21,7 @@ def get_required_env_var(name: str) -> str:
   """
   value = os.getenv(name)
   if not value:
-    logger.error(f"Required environment variable '{name}' is not set or is empty.")
-    sys.exit(1)
+    raise Exception(f"Required environment variable '{name}' is not set or is empty.")
   return value
 
 def main():
@@ -40,8 +39,8 @@ def main():
   is_sun_up = sun_up <= now
 
   if not is_sun_up:
-    logger.info("Sun hasn't risen or has set. Skipping poll.")
-    sys.exit(0)
+    logger.info("The Sun isn't up. Skipping poll.")
+    return
 
   cloud_server = get_required_env_var("CLOUD_SERVER")
   cloud_auth_key = get_required_env_var("CLOUD_AUTH_KEY")
@@ -62,8 +61,7 @@ def main():
   with sync_playwright() as playwright:
     session_cookie = get_session(playwright, url=fusion_solar_url, username=fusion_solar_username, password=fusion_solar_password)
   if not session_cookie:
-    logger.error("Session cookie is empty")
-    sys.exit(1)
+    raise Exception("Session cookie is empty.")
 
   current_usage = get_current_usage(session_cookie=session_cookie, station_dn=station_dn, time_dim=time_dim, time_zone=time_zone, subdomain=fusion_solar_subdomain)
 
